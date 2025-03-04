@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: market
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  gophermart:
+    build:
+      context: .
+      dockerfile: Dockerfile.gophermart
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      RUN_ADDRESS: 0.0.0.0:8081
+      DATABASE_URI: postgresql://postgres:postgres@postgres/market?sslmode=disable
+      GIN_MODE: release
+    ports:
+      - "8081:8081"
+    command: ["/gophermart"]
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URI: postgresql://postgres:postgres@postgres/market?sslmode=disable
+      ACCRUAL_SYSTEM_ADDRESS: accrual:8080
+    command: ["/scheduler"]
+
+  accrual:
+    build:
+      context: .
+      dockerfile: Dockerfile.accrual
+    platform: linux/amd64
+    environment:
+      DATABASE_URI: postgresql://postgres:postgres@postgres/market?sslmode=disable
+    ports:
+      - "8080:8080"
+    command: ["/accrual_linux_amd64"]
