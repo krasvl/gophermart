@@ -26,7 +26,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         volumes:
-          - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+          - /migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
 
     steps:
       - name: Checkout code
