@@ -30,16 +30,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Wait for Postgres to be ready
-        run: |
-          until docker exec postgres pg_isready -U postgres; do
-            echo "Waiting for postgres to be ready...";
-            sleep 1;
-          done
+      - name: Install PostgreSQL client
+        run: apt-get update && apt-get install --yes --no-install-recommends postgresql-client
 
-      - name: Run migrations
-        run: |
-          docker exec -i postgres psql -U postgres -d praktikum < ./migrations/init.sql
+      - name: Load migrations
+        run: psql -d postgresql://postgres:postgres@postgres/praktikum?sslmode=disable -f init.sql
+        working-directory: ./migrations
 
       - name: Download autotests binaries
         uses: robinraju/release-downloader@v1.8
