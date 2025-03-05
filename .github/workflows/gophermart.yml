@@ -60,9 +60,7 @@ jobs:
 
       - name: Start scheduler
         run: |
-          DATABASE_URI="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
-          ACCRUAL_SYSTEM_ADDRESS="localhost:8081" \
-          cmd/scheduler/scheduler &
+          cmd/scheduler/scheduler -d "postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" -r "localhost:8081" &
 
       - name: Test
         run: |
