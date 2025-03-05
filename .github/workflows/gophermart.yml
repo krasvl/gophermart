@@ -67,8 +67,7 @@ jobs:
       - name: Start scheduler
         run: cmd/scheduler/scheduler \\
           -d ${{ env.POSTGRES_URI }} \
-          -r ${{ env.ACCRUAL_HOST }}:${{ env.ACCRUAL_PORT }} \
-        background: true
+          -r ${{ env.ACCRUAL_HOST }}:${{ env.ACCRUAL_PORT }} &
 
       - name: Test
         run: |
