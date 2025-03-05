@@ -60,8 +60,8 @@ jobs:
 
       - name: Start scheduler
         run: cmd/scheduler/scheduler \\
-          -d "postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
-          -r "localhost:8081" &
+          -d postgresql://postgres:postgres@postgres/praktikum?sslmode=disable \
+          -r localhost:8081 &
 
       - name: Test
         run: |
