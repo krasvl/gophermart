@@ -30,6 +30,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set env variables
+        run: |
+          echo "ACCRUAL_HOST=localhost" >> $GITHUB_ENV
+          echo "ACCRUAL_PORT=$(random unused-port)" >> $GITHUB_ENV
+          echo "POSTGRES_URI=postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" >> $GITHUB_ENV
+
       - name: Install PostgreSQL client
         run: apt-get update && apt-get install --yes --no-install-recommends postgresql-client
 
@@ -59,7 +65,10 @@ jobs:
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
 
       - name: Start scheduler
-        run: cmd/scheduler/scheduler
+        run: cmd/scheduler/scheduler \\
+          -d ${{ env.POSTGRES_URI }} \
+          -r ${{ env.ACCRUAL_HOST }}:${{ env.ACCRUAL_PORT }} \
+        background: true
 
       - name: Test
         run: |
@@ -68,8 +77,8 @@ jobs:
             -gophermart-binary-path=cmd/gophermart/gophermart \
             -gophermart-host=localhost \
             -gophermart-port=8080 \
-            -gophermart-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
+            -gophermart-database-uri=${{ env.POSTGRES_URI }} \
             -accrual-binary-path=cmd/accrual/accrual_linux_amd64 \
-            -accrual-host=localhost \
-            -accrual-port=$(random unused-port) \
-            -accrual-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable"
+            -accrual-host=${{ env.ACCRUAL_HOST }} \
+            -accrual-port=${{ env.ACCRUAL_PORT }} \
+            -accrual-database-uri=${{ env.POSTGRES_URI }}
