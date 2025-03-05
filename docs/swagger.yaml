@@ -1,4 +1,4 @@
-basePath: /
+basePath: /.
 definitions:
   handlers.BalanceResponse:
     properties:
@@ -13,6 +13,9 @@ definitions:
         type: string
       password:
         type: string
+    required:
+    - login
+    - password
     type: object
   handlers.OrderResponse:
     properties:
@@ -31,6 +34,9 @@ definitions:
         type: string
       password:
         type: string
+    required:
+    - login
+    - password
     type: object
   handlers.WithdrawRequest:
     properties:
@@ -60,16 +66,16 @@ definitions:
     - StatusProcessing
     - StatusInvalid
     - StatusProcessed
-host: localhost:8081
+host: localhost:8081.
 info:
   contact: {}
   description: This is a sample server for Gophermart.
-  title: Gophermart API
-  version: "1.0"
+  title: Gophermart API.
+  version: 1.0.
 paths:
   /api/user/balance:
     get:
-      description: Get current balance and total withdrawn points
+      description: Get current balance and total withdrawn points.
       produces:
       - application/json
       responses:
@@ -78,23 +84,23 @@ paths:
           schema:
             $ref: '#/definitions/handlers.BalanceResponse'
         "401":
-          description: Unauthorized
+          description: Unauthorized".
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: Internal server error".
           schema:
             type: string
       security:
       - BearerAuth: []
-      summary: Get user balance
+      summary: Get user balance.
       tags:
       - balance
   /api/user/balance/withdraw:
     post:
       consumes:
       - application/json
-      description: Withdraw points from balance for a new order
+      description: Withdraw points from balance for a new order.
       parameters:
       - description: Withdrawal
         in: body
@@ -106,35 +112,35 @@ paths:
       - application/json
       responses:
         "200":
-          description: Withdrawal successful
+          description: Withdrawal successful".
           schema:
             type: string
         "401":
-          description: Unauthorized
+          description: Unauthorized".
           schema:
             type: string
         "402":
-          description: Insufficient funds
+          description: Insufficient funds".
           schema:
             type: string
         "422":
-          description: Invalid order number
+          description: Invalid order number".
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: Internal server error".
           schema:
             type: string
       security:
       - BearerAuth: []
-      summary: Withdraw points from balance
+      summary: Withdraw points from balance.
       tags:
       - balance
   /api/user/login:
     post:
       consumes:
       - application/json
-      description: Login a user with login and password
+      description: Login a user with login and password.
       parameters:
       - description: User
         in: body
@@ -146,27 +152,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: JWT token
+          description: JWT token".
           schema:
             type: string
         "400":
-          description: Invalid request
+          description: Invalid request".
           schema:
             type: string
         "401":
-          description: Invalid login or password
+          description: Invalid login or password".
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: Internal server error".
           schema:
             type: string
-      summary: Login a user
+      summary: Login a user.
       tags:
       - user
   /api/user/orders:
     get:
-      description: Get list of orders submitted by the user
+      description: Get list of orders submitted by the user.
       produces:
       - application/json
       responses:
@@ -177,26 +183,26 @@ paths:
               $ref: '#/definitions/handlers.OrderResponse'
             type: array
         "204":
-          description: No content
+          description: No content.".
           schema:
             type: string
         "401":
-          description: Unauthorized
+          description: Unauthorized.".
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: Internal server error.".
           schema:
             type: string
       security:
       - BearerAuth: []
-      summary: Get list of orders
+      summary: Get list of orders.
       tags:
       - order
     post:
       consumes:
       - text/plain
-      description: Submit an order number for loyalty points calculation
+      description: Submit an order number for loyalty points calculation.
       parameters:
       - description: Order Number
         in: body
@@ -208,43 +214,43 @@ paths:
       - application/json
       responses:
         "200":
-          description: Order already uploaded by this user
+          description: Order already uploaded by this user.".
           schema:
             type: string
         "202":
-          description: Order accepted for processing
+          description: Order accepted for processing.".
           schema:
             type: string
         "400":
-          description: Invalid request
+          description: Invalid request.".
           schema:
             type: string
         "401":
-          description: Unauthorized
+          description: Unauthorized.".
           schema:
             type: string
         "409":
-          description: Order number already exists
+          description: Order number already exists.".
           schema:
             type: string
         "422":
-          description: Invalid order number
+          description: Invalid order number.".
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: Internal server error.".
           schema:
             type: string
       security:
       - BearerAuth: []
-      summary: Submit an order number
+      summary: Submit an order number.
       tags:
       - order
   /api/user/register:
     post:
       consumes:
       - application/json
-      description: Register a new user with login and password
+      description: Register a new user with login and password.
       parameters:
       - description: User
         in: body
@@ -256,27 +262,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: JWT token
+          description: JWT token".
           schema:
             type: string
         "400":
-          description: Invalid request
+          description: Invalid request".
           schema:
             type: string
         "409":
-          description: Login already exists
+          description: Login already exists".
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: Internal server error".
           schema:
             type: string
-      summary: Register a new user
+      summary: Register a new user.
       tags:
       - user
   /api/user/withdrawals:
     get:
-      description: Get list of withdrawals made by the user
+      description: Get list of withdrawals made by the user.
       produces:
       - application/json
       responses:
@@ -287,25 +293,25 @@ paths:
               $ref: '#/definitions/handlers.WithdrawalResponse'
             type: array
         "204":
-          description: No content
+          description: No content".
           schema:
             type: string
         "401":
-          description: Unauthorized
+          description: Unauthorized".
           schema:
             type: string
         "500":
-          description: Internal server error
+          description: Internal server error".
           schema:
             type: string
       security:
       - BearerAuth: []
-      summary: Get list of withdrawals
+      summary: Get list of withdrawals.
       tags:
       - withdrawal
 securityDefinitions:
-  BearerAuth:
-    in: header
-    name: Authorization
+  BearerAuth.:
+    in: header.
+    name: Authorization.
     type: apiKey
 swagger: "2.0"

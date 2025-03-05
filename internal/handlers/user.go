@@ -40,9 +40,9 @@ func NewUserHandler(logger *zap.Logger, storage storage.UserStorage, secret stri
 // RegisterUser godoc.
 // @Summary Register a new user.
 // @Description Register a new user with login and password.
-// @Tags user.
-// @Accept json.
-// @Produce json.
+// @Tags user
+// @Accept json
+// @Produce json
 // @Param user body RegisterRequest true "User".
 // @Success 200 {string} string "JWT token".
 // @Failure 400 {string} string "Invalid request".
@@ -95,9 +95,9 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 // LoginUser godoc.
 // @Summary Login a user.
 // @Description Login a user with login and password.
-// @Tags user.
-// @Accept json.
-// @Produce json.
+// @Tags user
+// @Accept json
+// @Produce json
 // @Param user body LoginRequest true "User".
 // @Success 200 {string} string "JWT token".
 // @Failure 400 {string} string "Invalid request".

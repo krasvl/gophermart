@@ -22,14 +22,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get current balance and total withdrawn points",
+                "description": "Get current balance and total withdrawn points.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "balance"
                 ],
-                "summary": "Get user balance",
+                "summary": "Get user balance.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -38,13 +38,13 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error\".",
                         "schema": {
                             "type": "string"
                         }
@@ -59,7 +59,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Withdraw points from balance for a new order",
+                "description": "Withdraw points from balance for a new order.",
                 "consumes": [
                     "application/json"
                 ],
@@ -69,7 +69,7 @@ const docTemplate = `{
                 "tags": [
                     "balance"
                 ],
-                "summary": "Withdraw points from balance",
+                "summary": "Withdraw points from balance.",
                 "parameters": [
                     {
                         "description": "Withdrawal",
@@ -83,31 +83,31 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Withdrawal successful",
+                        "description": "Withdrawal successful\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "402": {
-                        "description": "Insufficient funds",
+                        "description": "Insufficient funds\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "422": {
-                        "description": "Invalid order number",
+                        "description": "Invalid order number\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error\".",
                         "schema": {
                             "type": "string"
                         }
@@ -117,7 +117,7 @@ const docTemplate = `{
         },
         "/api/user/login": {
             "post": {
-                "description": "Login a user with login and password",
+                "description": "Login a user with login and password.",
                 "consumes": [
                     "application/json"
                 ],
@@ -127,7 +127,7 @@ const docTemplate = `{
                 "tags": [
                     "user"
                 ],
-                "summary": "Login a user",
+                "summary": "Login a user.",
                 "parameters": [
                     {
                         "description": "User",
@@ -141,25 +141,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "JWT token",
+                        "description": "JWT token\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Invalid login or password",
+                        "description": "Invalid login or password\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error\".",
                         "schema": {
                             "type": "string"
                         }
@@ -174,14 +174,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get list of orders submitted by the user",
+                "description": "Get list of orders submitted by the user.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "order"
                 ],
-                "summary": "Get list of orders",
+                "summary": "Get list of orders.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -193,19 +193,19 @@ const docTemplate = `{
                         }
                     },
                     "204": {
-                        "description": "No content",
+                        "description": "No content.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error.\".",
                         "schema": {
                             "type": "string"
                         }
@@ -218,7 +218,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Submit an order number for loyalty points calculation",
+                "description": "Submit an order number for loyalty points calculation.",
                 "consumes": [
                     "text/plain"
                 ],
@@ -228,7 +228,7 @@ const docTemplate = `{
                 "tags": [
                     "order"
                 ],
-                "summary": "Submit an order number",
+                "summary": "Submit an order number.",
                 "parameters": [
                     {
                         "description": "Order Number",
@@ -242,43 +242,43 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Order already uploaded by this user",
+                        "description": "Order already uploaded by this user.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "202": {
-                        "description": "Order accepted for processing",
+                        "description": "Order accepted for processing.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "409": {
-                        "description": "Order number already exists",
+                        "description": "Order number already exists.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "422": {
-                        "description": "Invalid order number",
+                        "description": "Invalid order number.\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error.\".",
                         "schema": {
                             "type": "string"
                         }
@@ -288,7 +288,7 @@ const docTemplate = `{
         },
         "/api/user/register": {
             "post": {
-                "description": "Register a new user with login and password",
+                "description": "Register a new user with login and password.",
                 "consumes": [
                     "application/json"
                 ],
@@ -298,7 +298,7 @@ const docTemplate = `{
                 "tags": [
                     "user"
                 ],
-                "summary": "Register a new user",
+                "summary": "Register a new user.",
                 "parameters": [
                     {
                         "description": "User",
@@ -312,25 +312,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "JWT token",
+                        "description": "JWT token\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "409": {
-                        "description": "Login already exists",
+                        "description": "Login already exists\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error\".",
                         "schema": {
                             "type": "string"
                         }
@@ -345,14 +345,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get list of withdrawals made by the user",
+                "description": "Get list of withdrawals made by the user.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "withdrawal"
                 ],
-                "summary": "Get list of withdrawals",
+                "summary": "Get list of withdrawals.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -364,19 +364,19 @@ const docTemplate = `{
                         }
                     },
                     "204": {
-                        "description": "No content",
+                        "description": "No content\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized\".",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error\".",
                         "schema": {
                             "type": "string"
                         }
@@ -399,6 +399,10 @@ const docTemplate = `{
         },
         "handlers.LoginRequest": {
             "type": "object",
+            "required": [
+                "login",
+                "password"
+            ],
             "properties": {
                 "login": {
                     "type": "string"
@@ -427,6 +431,10 @@ const docTemplate = `{
         },
         "handlers.RegisterRequest": {
             "type": "object",
+            "required": [
+                "login",
+                "password"
+            ],
             "properties": {
                 "login": {
                     "type": "string"
@@ -478,21 +486,21 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "BearerAuth": {
+        "BearerAuth.": {
             "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
+            "name": "Authorization.",
+            "in": "header."
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8081",
-	BasePath:         "/",
+	Version:          "1.0.",
+	Host:             "localhost:8081.",
+	BasePath:         "/.",
 	Schemes:          []string{},
-	Title:            "Gophermart API",
+	Title:            "Gophermart API.",
 	Description:      "This is a sample server for Gophermart.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

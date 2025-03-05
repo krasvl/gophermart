@@ -45,12 +45,12 @@ func NewBalanceHandler(logger *zap.Logger, storage storage.BalanceStorage, secre
 // GetBalance godoc.
 // @Summary Get user balance.
 // @Description Get current balance and total withdrawn points.
-// @Tags balance.
-// @Produce json.
-// @Success 200 {object} BalanceResponse.
+// @Tags balance
+// @Produce json
+// @Success 200 {object} BalanceResponse
 // @Failure 401 {string} string "Unauthorized".
 // @Failure 500 {string} string "Internal server error".
-// @Security BearerAuth.
+// @Security BearerAuth
 // @Router /api/user/balance [get].
 func (h *BalanceHandler) GetBalance(c *gin.Context) {
 	userID := c.GetInt("userID")
@@ -73,16 +73,16 @@ func (h *BalanceHandler) GetBalance(c *gin.Context) {
 // Withdraw godoc.
 // @Summary Withdraw points from balance.
 // @Description Withdraw points from balance for a new order.
-// @Tags balance.
-// @Accept json.
-// @Produce json.
+// @Tags balance
+// @Accept json
+// @Produce json
 // @Param withdrawal body WithdrawRequest true "Withdrawal".
 // @Success 200 {string} string "Withdrawal successful".
 // @Failure 401 {string} string "Unauthorized".
 // @Failure 402 {string} string "Insufficient funds".
 // @Failure 422 {string} string "Invalid order number".
 // @Failure 500 {string} string "Internal server error".
-// @Security BearerAuth.
+// @Security BearerAuth
 // @Router /api/user/balance/withdraw [post].
 func (h *BalanceHandler) Withdraw(c *gin.Context) {
 	userID := c.GetInt("userID")
@@ -113,13 +113,13 @@ func (h *BalanceHandler) Withdraw(c *gin.Context) {
 // GetWithdrawals godoc.
 // @Summary Get list of withdrawals.
 // @Description Get list of withdrawals made by the user.
-// @Tags withdrawal.
-// @Produce json.
-// @Success 200 {array} WithdrawalResponse.
+// @Tags withdrawal
+// @Produce json
+// @Success 200 {array} WithdrawalResponse
 // @Failure 204 {string} string "No content".
 // @Failure 401 {string} string "Unauthorized".
 // @Failure 500 {string} string "Internal server error".
-// @Security BearerAuth.
+// @Security BearerAuth
 // @Router /api/user/withdrawals [get].
 func (h *BalanceHandler) GetWithdrawals(c *gin.Context) {
 	userID := c.GetInt("userID")

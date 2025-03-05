@@ -13,6 +13,10 @@ up:
 down:
 	docker-compose -f $(COMPOSE_FILE) down
 
+.PHONY: swag
+swag:
+	swag init -g internal/server/server.go
+
 .PHONY: lint
 lint: _golangci-lint-rm-unformatted-report
 

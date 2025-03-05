@@ -35,9 +35,9 @@ func NewOrderHandler(logger *zap.Logger, storage storage.OrderStorage, secret st
 // AddOrder godoc.
 // @Summary Submit an order number.
 // @Description Submit an order number for loyalty points calculation.
-// @Tags order.
-// @Accept plain.
-// @Produce json.
+// @Tags order
+// @Accept plain
+// @Produce json
 // @Param order body string true "Order Number".
 // @Success 200 {string} string "Order already uploaded by this user.".
 // @Success 202 {string} string "Order accepted for processing.".
@@ -46,7 +46,7 @@ func NewOrderHandler(logger *zap.Logger, storage storage.OrderStorage, secret st
 // @Failure 409 {string} string "Order number already exists.".
 // @Failure 422 {string} string "Invalid order number.".
 // @Failure 500 {string} string "Internal server error.".
-// @Security BearerAuth.
+// @Security BearerAuth
 // @Router /api/user/orders [post].
 func (h *OrderHandler) AddOrder(c *gin.Context) {
 	userID := c.GetInt("userID")
@@ -96,13 +96,13 @@ func (h *OrderHandler) AddOrder(c *gin.Context) {
 // GetOrders godoc.
 // @Summary Get list of orders.
 // @Description Get list of orders submitted by the user.
-// @Tags order.
-// @Produce json.
-// @Success 200 {array} OrderResponse.
+// @Tags order
+// @Produce json
+// @Success 200 {array} OrderResponse
 // @Failure 204 {string} string "No content.".
 // @Failure 401 {string} string "Unauthorized.".
 // @Failure 500 {string} string "Internal server error.".
-// @Security BearerAuth.
+// @Security BearerAuth
 // @Router /api/user/orders [get].
 func (h *OrderHandler) GetOrders(c *gin.Context) {
 	userID := c.GetInt("userID")
