@@ -21,6 +21,15 @@ func NewMockOrderStorage() *MockOrderStorage {
 	return &MockOrderStorage{orders: []storage.Order{}}
 }
 
+func (m *MockOrderStorage) GetOrderHolder(order string) (int, bool, error) {
+	for _, o := range m.orders {
+		if o.Number == order {
+			return o.UserID, true, nil
+		}
+	}
+	return -1, false, nil
+}
+
 func (m *MockOrderStorage) AddOrder(order *storage.Order) error {
 	for _, o := range m.orders {
 		if o.Number == order.Number {
@@ -91,6 +100,20 @@ func TestAddOrder(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusAccepted, w.Code)
+	})
+
+	t.Run("Valid Request same order", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPost, "/api/user/orders", bytes.NewBufferString("4627100101654724"))
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusAccepted, w.Code)
+
+		w = httptest.NewRecorder()
+		req, _ = http.NewRequest(http.MethodPost, "/api/user/orders", bytes.NewBufferString("4627100101654724"))
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
 

@@ -24,12 +24,11 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 CREATE TABLE IF NOT EXISTS orders (
 	id SERIAL PRIMARY KEY,
 	user_id INT NOT NULL,
-	FOREIGN KEY (user_id) REFERENCES users(id),
-	number VARCHAR(50) NOT NULL,
-	UNIQUE (user_id, number),
+	number VARCHAR(50) NOT NULL UNIQUE,
 	status VARCHAR(50) NOT NULL CHECK (status IN ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED')),
 	accrual FLOAT NOT NULL,
-	uploaded_at TIMESTAMP NOT NULL DEFAULT now()
+	uploaded_at TIMESTAMP NOT NULL DEFAULT now(),
+	FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE OR REPLACE FUNCTION create_default_balance()

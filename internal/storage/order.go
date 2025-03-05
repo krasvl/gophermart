@@ -28,6 +28,7 @@ type Order struct {
 
 type OrderStorage interface {
 	AddOrder(order *Order) error
+	GetOrderHolder(order string) (int, bool, error)
 	GetOrders(userID int) ([]Order, error)
 	GetPendingOrders() ([]Order, error)
 	ProcessOrder(order *Order) error
@@ -43,6 +44,22 @@ func NewOrderStorage(db *sql.DB, logger *zap.Logger) (*OrderStoragePostgres, err
 		logger: logger,
 		db:     db,
 	}, nil
+}
+
+func (s *OrderStoragePostgres) GetOrderHolder(order string) (int, bool, error) {
+	var userID int
+	err := s.db.QueryRow(
+		"SELECT user_id FROM orders WHERE number = $1",
+		order,
+	).Scan(&userID)
+	if err == sql.ErrNoRows {
+		return -1, false, nil
+	}
+	if err != nil {
+		s.logger.Error("failed to get order", zap.Error(err))
+		return -1, false, err
+	}
+	return userID, true, nil
 }
 
 func (s *OrderStoragePostgres) AddOrder(order *Order) error {

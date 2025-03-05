@@ -69,14 +69,24 @@ func (h *OrderHandler) AddOrder(c *gin.Context) {
 		Status: "NEW",
 	}
 
+	holderID, ok, err := h.storage.GetOrderHolder(order.Number)
+	if err != nil {
+		h.logger.Error("failed to get order holder", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error."})
+		return
+	}
+	if ok && holderID == userID {
+		c.JSON(http.StatusOK, gin.H{"message": "Order already uploaded by this user."})
+		return
+	}
+	if ok && holderID != userID {
+		c.JSON(http.StatusConflict, gin.H{"error": "Order number already exists."})
+		return
+	}
 	err = h.storage.AddOrder(&order)
 	if err != nil {
-		if err.Error() == "pq: insert or update on table \"orders\" violates foreign key constraint \"orders_user_id_fkey\"" {
-			c.JSON(http.StatusConflict, gin.H{"error": "Order number already exists."})
-		} else {
-			h.logger.Error("failed to add order", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error."})
-		}
+		h.logger.Error("failed to add order", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error."})
 		return
 	}
 
