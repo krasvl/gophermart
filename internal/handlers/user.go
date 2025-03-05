@@ -88,7 +88,8 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.Header("Authorization", "Bearer "+token)
+	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
 }
 
 // LoginUser godoc.
@@ -130,5 +131,6 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.Header("Authorization", "Bearer "+token)
+	c.JSON(http.StatusOK, gin.H{"message": "User logged in successfully"})
 }

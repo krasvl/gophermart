@@ -62,6 +62,8 @@ func TestRegisterUser(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+		authHeader := w.Header().Get("Authorization")
+		assert.NotEmpty(t, authHeader, "Authorization header should not be empty")
 	})
 }
 
@@ -107,5 +109,7 @@ func TestLoginUser(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+		authHeader := w.Header().Get("Authorization")
+		assert.NotEmpty(t, authHeader, "Authorization header should not be empty")
 	})
 }
