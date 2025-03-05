@@ -55,7 +55,11 @@ jobs:
       - name: Prepare binaries
         run: |
           (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
+          (cd cmd/scheduler && go build -buildvcs=false -o scheduler)
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
+
+      - name: Start scheduler
+        run: cmd/scheduler/scheduler
 
       - name: Test
         run: |
