@@ -12,16 +12,30 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    container: golang:1.24
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: praktikum
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build image
-        run: docker compose -f docker-compose.ci.yml build
-      
-      - name: Up image
-        run: docker compose -f docker-compose.ci.yml up &
+      - name: Install PostgreSQL client
+        run: apt-get update && apt-get install --yes --no-install-recommends postgresql-client
+
+      - name: Load migrations
+        run: psql -d postgresql://postgres:postgres@postgres/praktikum?sslmode=disable -f init.sql
+        working-directory: ./migrations
 
       - name: Download autotests binaries
         uses: robinraju/release-downloader@v1.8
@@ -41,7 +55,13 @@ jobs:
       - name: Prepare binaries
         run: |
           (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
+          (cd cmd/scheduler && go build -buildvcs=false -o scheduler)
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
+
+      - name: Start scheduler
+        run: cmd/scheduler/scheduler \
+          -d "postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
+          -r "localhost:8081" &
 
       - name: Test
         run: |
@@ -50,8 +70,8 @@ jobs:
             -gophermart-binary-path=cmd/gophermart/gophermart \
             -gophermart-host=localhost \
             -gophermart-port=8080 \
-            -gophermart-database-uri="postgresql://postgres:postgres@postgres/market?sslmode=disable" \
+            -gophermart-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
             -accrual-binary-path=cmd/accrual/accrual_linux_amd64 \
             -accrual-host=localhost \
             -accrual-port=8081 \
-            -accrual-database-uri="postgresql://postgres:postgres@postgres/market?sslmode=disable"
+            -accrual-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable"
