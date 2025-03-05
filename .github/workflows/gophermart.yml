@@ -59,9 +59,9 @@ jobs:
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
 
       - name: Start scheduler
-        run: cmd/scheduler/scheduler \\
-          -d postgresql://postgres:postgres@postgres/praktikum?sslmode=disable \
-          -r localhost:8081 &
+        run: cmd/scheduler/scheduler \
+          -d "postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
+          -r "localhost:8081" &
 
       - name: Test
         run: |
