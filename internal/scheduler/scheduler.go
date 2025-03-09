@@ -1,28 +1,24 @@
 package scheduler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/krasvl/market/internal/storage"
 	"go.uber.org/zap"
 )
 
-type checkStatus string
-
-const (
-	Success checkStatus = "SUCCESS"
-	Fail    checkStatus = "FAIL"
-	Busy    checkStatus = "BUSY"
-)
-
 type Scheduler struct {
-	logger       *zap.Logger
-	orderStorage *storage.OrderStoragePostgres
-	accrualAddr  string
+	logger         *zap.Logger
+	orderStorage   *storage.OrderStoragePostgres
+	accrualTimeout atomic.Value
+	accrualAddr    string
 }
 
 func NewScheduler(logger *zap.Logger, orderStorage *storage.OrderStoragePostgres, accrualAddr string) *Scheduler {
@@ -34,7 +30,9 @@ func NewScheduler(logger *zap.Logger, orderStorage *storage.OrderStoragePostgres
 }
 
 func (s *Scheduler) Start() {
-	for range time.Tick(10 * time.Second) {
+	s.accrualTimeout.Store(time.Duration(10) * time.Second)
+	for range time.Tick(s.accrualTimeout.Load().(time.Duration)) {
+		s.accrualTimeout.Store(time.Duration(10) * time.Second)
 		s.checkOrders()
 	}
 }
@@ -45,34 +43,92 @@ func (s *Scheduler) checkOrders() {
 		s.logger.Error("failed to get pending orders", zap.Error(err))
 		return
 	}
-	s.logger.Debug("got pending orders", zap.Int("count", len(orders)))
 
+	jobs := make(chan *storage.Order, len(orders))
+	results := make(chan *storage.Order, len(orders))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	for w := 1; w <= 5; w++ {
+		go s.worker(ctx, cancel, jobs, results)
+	}
 	for _, order := range orders {
-		switch status, order := s.checkOrder(&order); status {
-		case Fail:
-			continue
-		case Busy:
-			s.logger.Warn("too many requests to accrual system")
+		jobs <- &order
+	}
+
+	close(jobs)
+
+	for order := range results {
+		if err := s.orderStorage.ProcessOrder(order); err != nil {
+			s.logger.Error("failed to update order status", zap.Error(err))
+		}
+		s.logger.Info("order was processed with status",
+			zap.String("order", order.Number),
+			zap.String("status", string(order.Status)),
+		)
+	}
+}
+
+func (s *Scheduler) worker(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	jobs <-chan *storage.Order,
+	results chan<- *storage.Order,
+) {
+	for order := range jobs {
+		select {
+		case <-ctx.Done():
 			return
-		case Success:
-			if err := s.orderStorage.ProcessOrder(order); err != nil {
-				s.logger.Error("failed to update order status", zap.Error(err))
+		default:
+			res, processedOrder := s.checkOrder(ctx, order)
+			if res.status == Success {
+				results <- processedOrder
 			}
-			s.logger.Info("order was processed with status",
-				zap.String("order", order.Number),
-				zap.String("status", string(order.Status)),
-			)
+			if res.status == Busy {
+				s.logger.Warn("accrual system is busy, retry after", zap.Int("timeout", res.timeout))
+				s.accrualTimeout.Store(time.Duration(res.timeout) * time.Second)
+				cancel()
+				return
+			}
+			if res.status == Fail {
+				s.logger.Error("failed to check order status")
+				continue
+			}
 		}
 	}
 }
 
-func (s *Scheduler) checkOrder(order *storage.Order) (checkStatus, *storage.Order) {
+type checkResult struct {
+	status  checkStatus
+	timeout int
+}
+
+type checkStatus string
+
+const (
+	Success checkStatus = "SUCCESS"
+	Fail    checkStatus = "FAIL"
+	Busy    checkStatus = "BUSY"
+)
+
+func (s *Scheduler) checkOrder(
+	ctx context.Context,
+	order *storage.Order,
+) (checkResult, *storage.Order) {
 	url := fmt.Sprintf("%s/api/orders/%s", s.accrualAddr, order.Number)
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	if err != nil {
+		s.logger.Error("failed to create request", zap.Error(err))
+		return checkResult{status: Fail}, nil
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		s.logger.Error("failed to get order status", zap.Error(err))
-		return Fail, nil
+		return checkResult{status: Fail}, nil
 	}
+
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			log.Println("Failed to close response body:", err)
@@ -80,17 +136,23 @@ func (s *Scheduler) checkOrder(order *storage.Order) (checkStatus, *storage.Orde
 	}()
 
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return Busy, nil
+		retryAfter := 60
+		if retryAfterStr := resp.Header.Get("Retry-After"); retryAfterStr != "" {
+			if retryAfterSec, err := strconv.Atoi(retryAfterStr); err == nil {
+				retryAfter = retryAfterSec
+			}
+		}
+		return checkResult{status: Busy, timeout: retryAfter}, nil
 	}
 
 	if resp.StatusCode == http.StatusNoContent {
 		order.Status = storage.StatusInvalid
-		return Success, order
+		return checkResult{status: Success}, order
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		s.logger.Error("unexpected response from accrual system", zap.Int("status", resp.StatusCode))
-		return Fail, nil
+		return checkResult{status: Fail}, nil
 	}
 
 	var result struct {
@@ -101,11 +163,11 @@ func (s *Scheduler) checkOrder(order *storage.Order) (checkStatus, *storage.Orde
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		s.logger.Error("failed to decode response", zap.Error(err))
-		return Fail, nil
+		return checkResult{status: Fail}, nil
 	}
 
 	order.Status = result.Status
 	order.Accrual = result.Accrual
 
-	return Success, order
+	return checkResult{status: Success}, order
 }

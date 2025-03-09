@@ -30,13 +30,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install PostgreSQL client
-        run: apt-get update && apt-get install --yes --no-install-recommends postgresql-client
-
-      - name: Load migrations
-        run: psql -d postgresql://postgres:postgres@postgres/praktikum?sslmode=disable -f init.sql
-        working-directory: ./migrations
-
       - name: Download autotests binaries
         uses: robinraju/release-downloader@v1.8
         with:

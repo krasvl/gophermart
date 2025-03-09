@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"os"
@@ -33,7 +32,7 @@ func GetConfiguredScheduler(databaseDefault, accrualAddrDefault string) (*Schedu
 		return nil, fmt.Errorf("cant create logger: %w", err)
 	}
 
-	db, err := sql.Open("postgres", *database)
+	db, err := storage.NewDB(*database)
 	if err != nil {
 		return nil, fmt.Errorf("cant open database: %w", err)
 	}

@@ -1,3 +1,5 @@
+BEGIN TRANSACTION;
+
 CREATE TABLE IF NOT EXISTS users (
 	id SERIAL PRIMARY KEY,
 	login VARCHAR(50) NOT NULL UNIQUE,
@@ -21,27 +23,16 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 	FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE TYPE order_status AS ENUM ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED');
+
 CREATE TABLE IF NOT EXISTS orders (
 	id SERIAL PRIMARY KEY,
 	user_id INT NOT NULL,
 	number VARCHAR(50) NOT NULL UNIQUE,
-	status VARCHAR(50) NOT NULL CHECK (status IN ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED')),
+	status order_status NOT NULL,
 	accrual FLOAT NOT NULL,
 	uploaded_at TIMESTAMP NOT NULL DEFAULT now(),
 	FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE OR REPLACE FUNCTION create_default_balance()
-RETURNS TRIGGER AS $$
-BEGIN
-	IF NOT EXISTS (SELECT 1 FROM balances WHERE user_id = NEW.id) THEN
-		INSERT INTO balances (user_id, current, withdrawn) VALUES (NEW.id, 0, 0);
-	END IF;
-	RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_create_default_balance
-AFTER INSERT ON users
-FOR EACH ROW
-EXECUTE FUNCTION create_default_balance();
+COMMIT;

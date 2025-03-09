@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"os"
@@ -32,7 +31,7 @@ func GetConfiguredServer(databaseDefault, addrDefault, secretDefault string) (*S
 		return nil, fmt.Errorf("cant create logger: %w", err)
 	}
 
-	db, err := sql.Open("postgres", *database)
+	db, err := storage.NewDB(*database)
 	if err != nil {
 		return nil, fmt.Errorf("cant open database: %w", err)
 	}
