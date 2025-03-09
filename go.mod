@@ -1,13 +1,11 @@
 module github.com/krasvl/market
 
-go 1.23.0
-
-toolchain go1.23.7
+go 1.22.12
 
 require (
 	github.com/swaggo/files v1.0.1
-	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.35.0
+	go.uber.org/zap v1.26.0
+	golang.org/x/crypto v0.33.0
 )
 
 require (
@@ -38,12 +36,12 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/arch v0.14.0 // indirect
-	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
