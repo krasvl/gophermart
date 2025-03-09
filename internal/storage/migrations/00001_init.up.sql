@@ -1,0 +1,38 @@
+BEGIN TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS users (
+	id SERIAL PRIMARY KEY,
+	login VARCHAR(50) NOT NULL UNIQUE,
+	password VARCHAR(60) NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS balances (
+	user_id INT PRIMARY KEY,
+	current FLOAT NOT NULL,
+	withdrawn FLOAT NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS withdrawals (
+	id SERIAL PRIMARY KEY,
+	user_id INT NOT NULL,
+	order_number VARCHAR(50) NOT NULL,
+	sum FLOAT NOT NULL,
+	processed_at TIMESTAMP NOT NULL DEFAULT now(),
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TYPE order_status AS ENUM ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED');
+
+CREATE TABLE IF NOT EXISTS orders (
+	id SERIAL PRIMARY KEY,
+	user_id INT NOT NULL,
+	number VARCHAR(50) NOT NULL UNIQUE,
+	status order_status NOT NULL,
+	accrual FLOAT NOT NULL,
+	uploaded_at TIMESTAMP NOT NULL DEFAULT now(),
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+COMMIT;
