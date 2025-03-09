@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/krasvl/market/internal/storage"
@@ -15,25 +14,35 @@ import (
 )
 
 type Scheduler struct {
-	logger         *zap.Logger
-	orderStorage   *storage.OrderStoragePostgres
-	accrualTimeout atomic.Value
-	accrualAddr    string
+	logger          *zap.Logger
+	orderStorage    *storage.OrderStoragePostgres
+	accrualAddr     string
+	accrualInterval time.Duration
+	intervalMu      sync.RWMutex
+	workerPoolSize  int
 }
 
-func NewScheduler(logger *zap.Logger, orderStorage *storage.OrderStoragePostgres, accrualAddr string) *Scheduler {
+func NewScheduler(
+	logger *zap.Logger,
+	orderStorage *storage.OrderStoragePostgres,
+	accrualAddr string,
+) *Scheduler {
 	return &Scheduler{
-		logger:       logger,
-		orderStorage: orderStorage,
-		accrualAddr:  accrualAddr,
+		logger:          logger,
+		orderStorage:    orderStorage,
+		accrualAddr:     accrualAddr,
+		accrualInterval: 10 * time.Second,
+		workerPoolSize:  5,
 	}
 }
 
 func (s *Scheduler) Start() {
-	s.accrualTimeout.Store(time.Duration(10) * time.Second)
-	for range time.Tick(s.accrualTimeout.Load().(time.Duration)) {
-		s.accrualTimeout.Store(time.Duration(10) * time.Second)
+	ticker := time.NewTicker(s.getAccrualInterval())
+	defer ticker.Stop()
+
+	for range ticker.C {
 		s.checkOrders()
+		ticker.Reset(s.getAccrualInterval())
 	}
 }
 
@@ -44,26 +53,34 @@ func (s *Scheduler) checkOrders() {
 		return
 	}
 
-	jobs := make(chan *storage.Order, len(orders))
-	results := make(chan *storage.Order, len(orders))
+	if len(orders) == 0 {
+		return
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	for w := 1; w <= 5; w++ {
+	jobs := make(chan storage.Order, len(orders))
+	results := make(chan storage.Order, len(orders))
+
+	for range s.workerPoolSize {
 		go s.worker(ctx, cancel, jobs, results)
 	}
-	for _, order := range orders {
-		jobs <- &order
-	}
 
+	for _, order := range orders {
+		jobs <- order
+	}
 	close(jobs)
 
 	for order := range results {
-		if err := s.orderStorage.ProcessOrder(order); err != nil {
-			s.logger.Error("failed to update order status", zap.Error(err))
+		if err := s.orderStorage.ProcessOrder(&order); err != nil {
+			s.logger.Error("failed to update order status",
+				zap.String("order", order.Number),
+				zap.Error(err),
+			)
+			continue
 		}
-		s.logger.Info("order was processed with status",
+		s.logger.Info("order processed",
 			zap.String("order", order.Number),
 			zap.String("status", string(order.Status)),
 		)
@@ -73,27 +90,29 @@ func (s *Scheduler) checkOrders() {
 func (s *Scheduler) worker(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	jobs <-chan *storage.Order,
-	results chan<- *storage.Order,
+	jobs <-chan storage.Order,
+	results chan<- storage.Order,
 ) {
 	for order := range jobs {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			res, processedOrder := s.checkOrder(ctx, order)
-			if res.status == Success {
-				results <- processedOrder
-			}
-			if res.status == Busy {
-				s.logger.Warn("accrual system is busy, retry after", zap.Int("timeout", res.timeout))
-				s.accrualTimeout.Store(time.Duration(res.timeout) * time.Second)
+			result, processedOrder := s.checkOrder(ctx, &order)
+			switch result.status {
+			case Success:
+				results <- *processedOrder
+			case Busy:
+				s.logger.Warn("accrual system busy, retrying after timeout",
+					zap.Int("timeout_sec", result.timeout),
+				)
+				s.setAccrualInterval(time.Duration(result.timeout) * time.Second)
 				cancel()
 				return
-			}
-			if res.status == Fail {
-				s.logger.Error("failed to check order status")
-				continue
+			case Fail:
+				s.logger.Error("failed to check order status",
+					zap.String("order", order.Number),
+				)
 			}
 		}
 	}
@@ -119,55 +138,77 @@ func (s *Scheduler) checkOrder(
 	url := fmt.Sprintf("%s/api/orders/%s", s.accrualAddr, order.Number)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
-		s.logger.Error("failed to create request", zap.Error(err))
+		s.logger.Error("failed to create request",
+			zap.String("order", order.Number),
+			zap.Error(err),
+		)
 		return checkResult{status: Fail}, nil
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		s.logger.Error("failed to get order status", zap.Error(err))
+		s.logger.Error("failed to get order status",
+			zap.String("order", order.Number),
+			zap.Error(err),
+		)
 		return checkResult{status: Fail}, nil
 	}
-
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Println("Failed to close response body:", err)
+			s.logger.Error("failed to close response body")
 		}
 	}()
 
-	if resp.StatusCode == http.StatusTooManyRequests {
-		retryAfter := 60
-		if retryAfterStr := resp.Header.Get("Retry-After"); retryAfterStr != "" {
-			if retryAfterSec, err := strconv.Atoi(retryAfterStr); err == nil {
-				retryAfter = retryAfterSec
-			}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var result struct {
+			Order   string              `json:"order"`
+			Status  storage.OrderStatus `json:"status"`
+			Accrual float64             `json:"accrual,omitempty"`
 		}
-		return checkResult{status: Busy, timeout: retryAfter}, nil
-	}
 
-	if resp.StatusCode == http.StatusNoContent {
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			s.logger.Error("failed to decode response",
+				zap.String("order", order.Number),
+				zap.Error(err),
+			)
+			return checkResult{status: Fail}, nil
+		}
+
+		order.Status = result.Status
+		order.Accrual = result.Accrual
+		return checkResult{status: Success}, order
+
+	case http.StatusNoContent:
 		order.Status = storage.StatusInvalid
 		return checkResult{status: Success}, order
-	}
 
-	if resp.StatusCode != http.StatusOK {
-		s.logger.Error("unexpected response from accrual system", zap.Int("status", resp.StatusCode))
+	case http.StatusTooManyRequests:
+		timeout := 60
+		if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
+			if sec, err := strconv.Atoi(retryAfter); err == nil {
+				timeout = sec
+			}
+		}
+		return checkResult{status: Busy, timeout: timeout}, nil
+
+	default:
+		s.logger.Error("unexpected status from accrual system",
+			zap.String("order", order.Number),
+			zap.Int("status_code", resp.StatusCode),
+		)
 		return checkResult{status: Fail}, nil
 	}
+}
 
-	var result struct {
-		Order   string              `json:"order"`
-		Status  storage.OrderStatus `json:"status"`
-		Accrual float64             `json:"accrual,omitempty"`
-	}
+func (s *Scheduler) getAccrualInterval() time.Duration {
+	s.intervalMu.RLock()
+	defer s.intervalMu.RUnlock()
+	return s.accrualInterval
+}
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		s.logger.Error("failed to decode response", zap.Error(err))
-		return checkResult{status: Fail}, nil
-	}
-
-	order.Status = result.Status
-	order.Accrual = result.Accrual
-
-	return checkResult{status: Success}, order
+func (s *Scheduler) setAccrualInterval(newInterval time.Duration) {
+	s.intervalMu.Lock()
+	defer s.intervalMu.Unlock()
+	s.accrualInterval = newInterval
 }

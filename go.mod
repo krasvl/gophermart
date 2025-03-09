@@ -1,6 +1,8 @@
 module github.com/krasvl/market
 
-go 1.24.0
+go 1.23.0
+
+toolchain go1.23.7
 
 require (
 	github.com/swaggo/files v1.0.1
