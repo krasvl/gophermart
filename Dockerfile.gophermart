@@ -1,0 +1,8 @@
+FROM golang:1.24 as builder
+WORKDIR /app
+COPY . .
+RUN cd cmd/gophermart && go build -o /gophermart
+
+FROM ubuntu:latest
+COPY --from=builder /gophermart /gophermart
+CMD ["/gophermart"]

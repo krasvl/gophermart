@@ -1,0 +1,8 @@
+FROM golang:1.24 as builder
+WORKDIR /app
+COPY . .
+RUN cd cmd/scheduler && go build -o /scheduler
+
+FROM ubuntu:latest
+COPY --from=builder /scheduler /scheduler
+CMD ["/scheduler"]
